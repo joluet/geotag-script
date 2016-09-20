@@ -3,129 +3,76 @@ var fs = require('fs'),
     XMLWriter = require('xml-writer');
 
 var parser = new xml2js.Parser();
-var file = '2016-09-18';
-fs.readFile(__dirname + '/history-' + file + '.kml', function(err, data) {
-    parser.parseString(data, function(err, result) {
-        var coord = [];
-        var placemarks = result['kml'].Document[0].Placemark;
-        var name = result['kml'].Document[0].name[0];
-        var descriptionArray = name.split("from");
-        var descriptionLoc = descriptionArray[0] + "for Google User from" + descriptionArray[1];
-        var open = result['kml'].Document[0].open[0];
-        var description = result['kml'].Document[0].description[0];
-        xw = new XMLWriter;
-        xw.startDocument('1.0', 'UTF-8');
-        xw.startElement('kml');
-        xw.writeAttribute('xmlns', 'http://www.opengis.net/kml/2.2');
-        xw.writeAttribute('xmlns:gx', 'http://www.google.com/kml/ext/2.2');
-        xw.startElement('Document');
-        xw.startElement('name');
-        xw.text(name);
-        xw.endElement();
-        xw.startElement('open');
-        xw.text(open);
-        xw.endElement();
-        xw.startElement('description');
-        xw.text(description);
-        xw.endElement();
-        xw.startElement('StyleMap');
-        xw.writeAttribute('id', 'multiTrack');
-        xw.startElement('Pair');
-        xw.startElement('key');
-        xw.text('normal');
-        xw.endElement();
-        xw.startElement('styleUrl')
-        xw.text('#multiTrack_n');
-        xw.endElement();
-        xw.endElement();
-        xw.startElement('Pair');
-        xw.startElement('key');
-        xw.text('highlight');
-        xw.endElement();
-        xw.startElement('styleUrl')
-        xw.text('#multiTrack_h');
-        xw.endElement();
-        xw.endElement();
-        xw.endElement();
+// change date according to file which shall be converted. File needs to be in the same folder. Date format convention: 'yyyy-mm-dd' as in file name
+var date = '2016-09-19';
 
-        xw.startElement('Style');
-        xw.writeAttribute('id', 'multiTrack_n');
-        xw.startElement('IconStyle');
-        xw.startElement('Icon');
-        xw.startElement('href');
-        xw.text('https://earth.google.com/images/kml-icons/track-directional/track-0.png');
-        xw.endElement();
-        xw.endElement();
-        xw.endElement();
-        xw.startElement('LineStyle');
-        xw.startElement('color');
-        xw.text('99ffac59');
-        xw.endElement();
-        xw.startElement('width');
-        xw.text('6');
-        xw.endElement();
-        xw.endElement();
-        xw.endElement();
-        xw.startElement('Style');
-        xw.writeAttribute('id', 'multiTrack_h');
-        xw.startElement('IconStyle');
-        xw.startElement('scale');
-        xw.text('1.2');
-        xw.endElement();
-        xw.startElement('Icon');
-        xw.startElement('href');
-        xw.text('https://earth.google.com/images/kml-icons/track-directional/track-0.png');
-        xw.endElement();
-        xw.endElement();
-        xw.endElement();
-        xw.startElement('LineStyle');
-        xw.startElement('color');
-        xw.text('99ffac59');
-        xw.endElement();
-        xw.startElement('width');
-        xw.text('8');
-        xw.endElement();
-        xw.endElement();
-        xw.endElement();
+// convert new google location history kml format into the old one. Input file name convention: history-[date].kml (as downloaded). Output: history-[date]_converted.kml
+convertFile(date);
 
-        xw.startElement('Placemark');
-        xw.startElement('name');
-        xw.text('Google User');
-        xw.endElement();
-        xw.startElement('description');
-        xw.text(descriptionLoc);
-        xw.endElement();
-        xw.startElement('gx:Track');
-        xw.startElement('altitudeMode');
-        xw.text('clampToGround');
-        xw.endElement();
-
-
-        for (var placemark in placemarks) {
-            var coords = placemarks[placemark]['gx:Track'][0]['gx:coord'];
-            var coordBegin = coords[0];
-            var coordEnd = coords[coords.length - 1];
-            var begin = placemarks[placemark].TimeSpan[0].begin[0];
-            var end = placemarks[placemark].TimeSpan[0].end[0];
-            xw.startElement('when');
-            xw.text(begin);
-            xw.endElement();
-            xw.startElement('gx:coord');
-            xw.text(coordBegin);
-            xw.endElement();
-            xw.startElement('when');
-            xw.text(end);
-            xw.endElement();
-            xw.startElement('gx:coord');
-            xw.text(coordEnd);
-            xw.endElement();
+// create the <when></when> node with dynamic values
+function createWhen(time, xmlWriterEl) {
+    xmlWriterEl.startElement('when');
+    xmlWriterEl.text(time);
+    xmlWriterEl.endElement();
+}
+// create the <gx:coord></gx:coord> node with dynamic values
+function createCoord(coordEl, xmlWriterEl) {
+    xmlWriterEl.startElement('gx:coord');
+    xmlWriterEl.text(coordEl);
+    xmlWriterEl.endElement();
+}
+// create <when></when><gx:coord></gx:coord> pair with dynamic values
+function createWhenCoordpair(time, coordEl, xmlWriterEl) {
+    createWhen(time, xmlWriterEl);
+    createCoord(coordEl, xmlWriterEl)
+}
+// create the <gx:Track></gx:Track> element
+function createTrackElement(placemarks, xmlWriterEl) {
+    xmlWriterEl.startElement('gx:Track');
+    xmlWriterEl.startElement('altitudeMode');
+    xmlWriterEl.text('clampToGround');
+    xmlWriterEl.endElement();
+    for (var placemark in placemarks) {
+        var coords = placemarks[placemark]['gx:Track'][0]['gx:coord'];
+        var coordBegin = coords[0];
+        var coordEnd = coords[coords.length - 1];
+        var begin = placemarks[placemark].TimeSpan[0].begin[0];
+        var end = placemarks[placemark].TimeSpan[0].end[0];
+        var beginDate = new Date(begin);
+        var endDate = new Date(end);
+        var timeSteps = Math.round((endDate - beginDate) / coords.length);
+        for (var coord in coords) {
+            var seconds = beginDate.getTime();
+            var timeSection = new Date(seconds + coord * timeSteps);
+            var isoDate = timeSection.toISOString();
+            createWhenCoordpair(isoDate, coords[coord], xmlWriterEl);
         }
-        xw.endElement();
+    }
+    xmlWriterEl.endElement();
+}
+// create KML file
+function createDocument(placemarks, xmlWriterEl, date){
+  xmlWriterEl.startDocument('1.0', 'UTF-8');
+  xmlWriterEl.startElement('kml');
+  xmlWriterEl.writeAttribute('xmlns', 'http://www.opengis.net/kml/2.2');
+  xmlWriterEl.writeAttribute('xmlns:gx', 'http://www.google.com/kml/ext/2.2');
+  xmlWriterEl.startElement('Document');
+  xmlWriterEl.startElement('Placemark');
 
-        xw.endElement();
-        xw.endElement();
-        xw.endDocument();
-        fs.writeFile('history-' + file + '_converted.kml', xw.toString())
+  createTrackElement(placemarks, xmlWriterEl);
 
-    });
-});
+  xmlWriterEl.endElement();
+  xmlWriterEl.endElement();
+  xmlWriterEl.endDocument();
+  fs.writeFile('history-' + date + '_converted.kml', xmlWriterEl.toString())
+}
+// read, parse and convert input file; write output file
+function convertFile(date){
+  fs.readFile(__dirname + '/history-' + date + '.kml', function(err, data) {
+      parser.parseString(data, function(err, result) {
+          var placemarks = result['kml'].Document[0].Placemark;
+          xw = new XMLWriter;
+          createDocument(placemarks, xw, date);
+      });
+  });
+}
