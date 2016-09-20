@@ -3,11 +3,7 @@ var fs = require('fs'),
     XMLWriter = require('xml-writer');
 
 var parser = new xml2js.Parser();
-// change date according to file which shall be converted. File needs to be in the same folder. Date format convention: 'yyyy-mm-dd' as in file name
-var date = '2016-09-19';
 
-// convert new google location history kml format into the old one. Input file name convention: history-[date].kml (as downloaded). Output: history-[date]_converted.kml
-convertFile(date);
 
 // create the <when></when> node with dynamic values
 function createWhen(time, xmlWriterEl) {
@@ -51,28 +47,27 @@ function createTrackElement(placemarks, xmlWriterEl) {
     xmlWriterEl.endElement();
 }
 // create KML file
-function createDocument(placemarks, xmlWriterEl, date){
-  xmlWriterEl.startDocument('1.0', 'UTF-8');
-  xmlWriterEl.startElement('kml');
-  xmlWriterEl.writeAttribute('xmlns', 'http://www.opengis.net/kml/2.2');
-  xmlWriterEl.writeAttribute('xmlns:gx', 'http://www.google.com/kml/ext/2.2');
-  xmlWriterEl.startElement('Document');
-  xmlWriterEl.startElement('Placemark');
+function createDocument(placemarks, xmlWriterEl, filename) {
+    xmlWriterEl.startDocument('1.0', 'UTF-8');
+    xmlWriterEl.startElement('kml');
+    xmlWriterEl.writeAttribute('xmlns', 'http://www.opengis.net/kml/2.2');
+    xmlWriterEl.writeAttribute('xmlns:gx', 'http://www.google.com/kml/ext/2.2');
+    xmlWriterEl.startElement('Document');
+    xmlWriterEl.startElement('Placemark');
 
-  createTrackElement(placemarks, xmlWriterEl);
+    createTrackElement(placemarks, xmlWriterEl);
 
-  xmlWriterEl.endElement();
-  xmlWriterEl.endElement();
-  xmlWriterEl.endDocument();
-  fs.writeFile('history-' + date + '_converted.kml', xmlWriterEl.toString())
+    xmlWriterEl.endElement();
+    xmlWriterEl.endElement();
+    xmlWriterEl.endDocument();
+    fs.writeFileSync(filename, xmlWriterEl.toString())
 }
 // read, parse and convert input file; write output file
-function convertFile(date){
-  fs.readFile(__dirname + '/history-' + date + '.kml', function(err, data) {
-      parser.parseString(data, function(err, result) {
-          var placemarks = result['kml'].Document[0].Placemark;
-          xw = new XMLWriter;
-          createDocument(placemarks, xw, date);
-      });
-  });
+exports.convertFile = function(filename) {
+    var data = fs.readFileSync(filename);
+    parser.parseString(data, function(err, result) {
+        var placemarks = result['kml'].Document[0].Placemark;
+        xw = new XMLWriter;
+        createDocument(placemarks, xw, filename);
+    });
 }

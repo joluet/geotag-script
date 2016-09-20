@@ -7,6 +7,8 @@ var exec = require('sync-exec');
 var chrome = require('chrome-cookies-secure');
 var path = require('path');
 var argv = require('minimist')(process.argv.slice(2));
+var convertKml = require('./convert_kml.js');
+
 
 if (argv['help'] || argv['h']) {
     console.log("Usage: geotag [path] [subfolder to start from] \n\n" +
@@ -45,8 +47,9 @@ for (var i = start; i < subdirs.length; i++) {
     var google_response = getKml(kml_request_url, jar);
 
     fs.writeFileSync(`${subdir}places.kml`, google_response, 'utf8');
+    convertKml.convertFile(`${subdir}places.kml`);
 
-    var cmd = `exiftool -overwrite_original -geotag ${subdir}places.kml ${dir}${subdir}/`;
+    var cmd = `exiftool -overwrite_original -geotag ${subdir}places.kml -api GeoMaxIntSecs=180 -api GeoMaxExtSecs=86400 ${dir}${subdir}/`;
     console.log(cmd);
     console.log(exec(cmd));
 }
