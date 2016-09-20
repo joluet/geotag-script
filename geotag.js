@@ -1,5 +1,7 @@
 'use strict';
 const DEFAULT_DIR = '/Users/jonas/Pictures/2016/';
+const TWO_DAYS_SECS = 172800;
+const THREE_MINS_SECS = 180;
 var request = require('request');
 var fs = require('fs');
 var exif = require('exiftool');
@@ -49,7 +51,7 @@ for (var i = start; i < subdirs.length; i++) {
     fs.writeFileSync(`${subdir}places.kml`, google_response, 'utf8');
     convertKml.convertFile(`${subdir}places.kml`);
 
-    var cmd = `exiftool -overwrite_original -geotag ${subdir}places.kml -api GeoMaxIntSecs=180 -api GeoMaxExtSecs=86400 ${dir}${subdir}/`;
+    var cmd = `exiftool -overwrite_original -geotag ${subdir}places.kml -api GeoMaxIntSecs=${THREE_MINS_SECS} -api GeoMaxExtSecs=${TWO_DAYS_SECS} ${dir}${subdir}/`;
     console.log(cmd);
     console.log(exec(cmd));
 }
