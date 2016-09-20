@@ -30,6 +30,9 @@ function createTrackElement(placemarks, xmlWriterEl) {
     xmlWriterEl.endElement();
     for (var placemark in placemarks) {
         var coords = placemarks[placemark]['gx:Track'][0]['gx:coord'];
+        if(typeof(coords) == 'undefined' ) {
+          continue;
+        }
         var coordBegin = coords[0];
         var coordEnd = coords[coords.length - 1];
         var begin = placemarks[placemark].TimeSpan[0].begin[0];
