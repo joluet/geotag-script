@@ -30,22 +30,28 @@ function createTrackElement(placemarks, xmlWriterEl) {
     xmlWriterEl.endElement();
     for (var placemark in placemarks) {
         var coords = placemarks[placemark]['gx:Track'][0]['gx:coord'];
-        if(typeof(coords) == 'undefined' ) {
-          continue;
+        if (typeof(coords) == 'undefined') {
+            continue;
         }
         var coordBegin = coords[0];
         var coordEnd = coords[coords.length - 1];
         var begin = placemarks[placemark].TimeSpan[0].begin[0];
         var end = placemarks[placemark].TimeSpan[0].end[0];
-        var beginDate = new Date(begin);
-        var endDate = new Date(end);
-        var timeSteps = Math.round((endDate - beginDate) / coords.length);
-        for (var coord in coords) {
-            var seconds = beginDate.getTime();
-            var timeSection = new Date(seconds + coord * timeSteps);
-            var isoDate = timeSection.toISOString();
-            createWhenCoordpair(isoDate, coords[coord], xmlWriterEl);
+        if (coords.length == 1) {
+            createWhenCoordpair(begin, coordBegin, xmlWriterEl);
+            createWhenCoordpair(end, coordEnd, xmlWriterEl);
+        } else {
+            var beginDate = new Date(begin);
+            var endDate = new Date(end);
+            var timeSteps = Math.round((endDate - beginDate) / coords.length);
+            for (var coord in coords) {
+                var seconds = beginDate.getTime();
+                var timeSection = new Date(seconds + coord * timeSteps);
+                var isoDate = timeSection.toISOString();
+                createWhenCoordpair(isoDate, coords[coord], xmlWriterEl);
+            }
         }
+
     }
     xmlWriterEl.endElement();
 }
@@ -66,7 +72,7 @@ function createDocument(placemarks, xmlWriterEl, filename) {
     fs.writeFileSync(filename, xmlWriterEl.toString())
 }
 // read, parse and convert input file; write output file
-exports.convertFile = function(filename) {
+function convertFile(filename) {
     var data = fs.readFileSync(filename);
     parser.parseString(data, function(err, result) {
         var placemarks = result['kml'].Document[0].Placemark;
@@ -74,3 +80,4 @@ exports.convertFile = function(filename) {
         createDocument(placemarks, xw, filename);
     });
 }
+convertFile('2016-06-18.kml')
