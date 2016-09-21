@@ -72,7 +72,7 @@ function createDocument(placemarks, xmlWriterEl, filename) {
     fs.writeFileSync(filename, xmlWriterEl.toString())
 }
 // read, parse and convert input file; write output file
-function convertFile(filename) {
+exports.convertFile = function(filename) {
     var data = fs.readFileSync(filename);
     parser.parseString(data, function(err, result) {
         var placemarks = result['kml'].Document[0].Placemark;
@@ -80,4 +80,3 @@ function convertFile(filename) {
         createDocument(placemarks, xw, filename);
     });
 }
-convertFile('2016-06-18.kml')
