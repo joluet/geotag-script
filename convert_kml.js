@@ -21,6 +21,9 @@ function createCoord(coordEl, xmlWriterEl) {
 function createWhenCoordpair(time, coordEl, xmlWriterEl) {
     createWhen(time, xmlWriterEl);
     createCoord(coordEl, xmlWriterEl)
+
+
+    
 }
 // create the <gx:Track></gx:Track> element
 function createTrackElement(placemarks, xmlWriterEl) {
