@@ -51,7 +51,7 @@ for (var i = start; i < subdirs.length; i++) {
     fs.writeFileSync(`${subdir}places.kml`, google_response, 'utf8');
     convertKml.convertFile(`${subdir}places.kml`);
 
-    var cmd = `exiftool -overwrite_original -geotag ${subdir}places.kml -api GeoMaxIntSecs=${THREE_MINS_SECS} -api GeoMaxExtSecs=${TWO_DAYS_SECS} ${dir}${subdir}/`;
+    var cmd = `exiftool -overwrite_original -geotag ${subdir}places.kml '-geotime<\$\{DateTimeOriginal\}+00:00' -api GeoMaxIntSecs=${THREE_MINS_SECS} -api GeoMaxExtSecs=${TWO_DAYS_SECS} ${dir}${subdir}/`;
     console.log(cmd);
     console.log(exec(cmd));
 }
