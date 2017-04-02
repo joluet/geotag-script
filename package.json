@@ -1,0 +1,12 @@
+{
+  "name": "Geotag with Google Timeline",
+  "dependencies": {
+    "chrome-cookies-secure": "^1.1.5",
+    "exiftool": "0.0.3",
+    "fs": "0.0.1-security",
+    "minimist": "^1.2.0",
+    "path": "^0.12.7",
+    "request": "^2.81.0",
+    "sync-exec": "^0.6.2"
+  }
+}
